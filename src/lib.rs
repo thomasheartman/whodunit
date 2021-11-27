@@ -1,14 +1,19 @@
+use ordered_map::OrderedMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 fn process_data<'a>(products: &'a [Input<'a>]) -> Vec<Output<'a>> {
-    let mut map = HashMap::<&str, Output>::new();
+    let mut map = OrderedMap::<&str, Output, &str>::new(|x| x.assigned_to);
     for p in products {
         map.insert(p.assigned_to, Output::try_from(p).unwrap());
     }
 
-    let mut output: Vec<Output> = map.into_values().collect();
-    output.sort_by(|a, b| a.assigned_to.cmp(b.assigned_to));
+    let mut output: Vec<Output> = vec![];
+    for x in map.descending_values().into_iter() {
+        output.push(x.to_owned());
+    }
+
+    output.reverse();
     output
 }
 
