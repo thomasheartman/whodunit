@@ -9,6 +9,8 @@ fn process_data(products: &mut Vec<Input>) -> Vec<Input> {
             output.push(p.clone())
         }
     }
+
+    output.sort_by(|a, b| a.assigned_to.cmp(&b.assigned_to));
     output
 }
 
@@ -90,5 +92,19 @@ mod tests {
         assert_eq!(output.len(), 2);
         assert!(output.contains(&c));
         assert!(output.contains(&d));
+    }
+
+    #[test]
+    fn it_sorts_by_assigned_to() {
+        let a = Input::new("", "", "a");
+        let b = Input::new("", "", "b");
+        let c = Input::new("", "", "c");
+        let mut input = vec![b.clone(), c.clone(), a.clone()];
+
+        let expected = vec![a.clone(), b.clone(), c.clone()];
+
+        let output = process_data(&mut input);
+
+        assert_eq!(output, expected);
     }
 }
