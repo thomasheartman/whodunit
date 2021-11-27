@@ -6,7 +6,7 @@ fn process_data(products: &mut Vec<Input>) -> Vec<Output> {
     let mut output: Vec<Output> = vec![];
     for p in products {
         if !output.iter().any(|x| x.assigned_to == p.assigned_to) {
-            output.push(Output::try_from(p.clone()).unwrap())
+            output.push(Output::try_from(p).unwrap())
         }
     }
 
@@ -46,21 +46,21 @@ impl Input {
 
 #[derive(Serialize, PartialEq, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-struct Target {
-    location: String,
-    object_id: String,
-    code: String,
+struct Target<'a> {
+    location: &'a str,
+    object_id: &'a str,
+    code: &'a str,
 }
 
-impl TryFrom<&str> for Target {
+impl<'a> TryFrom<&'a str> for Target<'a> {
     type Error = &'static str;
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
+    fn try_from(s: &'a str) -> Result<Self, Self::Error> {
         let segments: Vec<&str> = s.split(':').collect();
         match &segments as &[&str] {
-            [loc, id, code, ..] => Ok(Target {
-                location: loc.to_string(),
-                object_id: id.to_string(),
-                code: code.to_string(),
+            [location, object_id, code, ..] => Ok(Target {
+                location,
+                object_id,
+                code,
             }),
             _ => Err("Couldn't convert string"),
         }
@@ -69,14 +69,28 @@ impl TryFrom<&str> for Target {
 
 #[derive(Serialize, PartialEq, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-struct Output {
-    target: Target,
+struct Output<'a> {
+    target: Target<'a>,
     assigned_to: String,
 }
 
-impl TryFrom<Input> for Output {
+impl<'a> TryFrom<&'a Input> for Output<'a> {
     type Error = &'static str;
-    fn try_from(input: Input) -> Result<Self, Self::Error> {
+    fn try_from(input: &'a Input) -> Result<Self, Self::Error> {
+        match Target::try_from(input.target.as_str()) {
+            Ok(target) => Ok(Self {
+                target,
+                assigned_to: input.assigned_to.clone(),
+            }),
+
+            Err(_) => Err("Couldn't convert input to output because of an error"),
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a mut Input> for Output<'a> {
+    type Error = &'static str;
+    fn try_from(input: &'a mut Input) -> Result<Self, Self::Error> {
         match Target::try_from(input.target.as_str()) {
             Ok(target) => Ok(Self {
                 target,
@@ -122,9 +136,14 @@ mod tests {
     fn it_removes_the_right_elements() {
         let c = Input::new("c:j:t", "", "a");
         let d = Input::new("d:x:z", "", "b");
-        let c_out = Output::try_from(c.clone()).unwrap();
-        let d_out = Output::try_from(d.clone()).unwrap();
-        let mut input = vec![Input::new("x", "", "a"), Input::new("x", "", "b"), c, d];
+        let c_out = Output::try_from(&c).unwrap();
+        let d_out = Output::try_from(&d).unwrap();
+        let mut input = vec![
+            Input::new("x", "", "a"),
+            Input::new("x", "", "b"),
+            c.clone(),
+            d.clone(),
+        ];
 
         let output = process_data(&mut input);
 
@@ -141,9 +160,9 @@ mod tests {
         let mut input = vec![b.clone(), c.clone(), a.clone()];
 
         let expected = vec![
-            Output::try_from(a.clone()).unwrap(),
-            Output::try_from(b.clone()).unwrap(),
-            Output::try_from(c.clone()).unwrap(),
+            Output::try_from(&a).unwrap(),
+            Output::try_from(&b).unwrap(),
+            Output::try_from(&c).unwrap(),
         ];
 
         let output = process_data(&mut input);
@@ -156,9 +175,9 @@ mod tests {
         let input = "a:b:c";
 
         let expected = Target {
-            location: "a".to_string(),
-            object_id: "b".to_string(),
-            code: "c".to_string(),
+            location: "a",
+            object_id: "b",
+            code: "c",
         };
 
         let actual = Target::try_from(input).unwrap();
