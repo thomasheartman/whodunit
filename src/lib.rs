@@ -123,7 +123,7 @@ mod tests {
         let c = Input::new("c:j:t", "", "a");
         let d = Input::new("d:x:z", "", "b");
         let c_out = Output::try_from(c.clone()).unwrap();
-        let d_out = Output::try_from(c.clone()).unwrap();
+        let d_out = Output::try_from(d.clone()).unwrap();
         let mut input = vec![Input::new("x", "", "a"), Input::new("x", "", "b"), c, d];
 
         let output = process_data(&mut input);
