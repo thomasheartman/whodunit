@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 criterion = { version = "0.3.5", features = [ "html_reports" ] }
+serde = "1.0.128"
+serde_json = "1.0.66"
 
 [lib]
 bench = false
