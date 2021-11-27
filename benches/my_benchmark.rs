@@ -1,19 +1,11 @@
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use whodunit::{fibonacci, fibonacci_fast};
+use criterion::{criterion_group, criterion_main, Criterion};
+use whodunit::algorithm;
 
-pub fn criterion_benchmark(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Fibs");
+pub fn bench_algorithm(c: &mut Criterion) {
+    let input = std::fs::read_to_string("./input.json").unwrap();
 
-    for i in [20u64, 21u64, 22u64].iter() {
-        group.bench_with_input(BenchmarkId::new("Recursive", i), i, |b, i| {
-            b.iter(|| fibonacci(*i))
-        });
-        group.bench_with_input(BenchmarkId::new("Iterative", i), i, |b, i| {
-            b.iter(|| fibonacci_fast(*i))
-        });
-    }
-    group.finish();
+    c.bench_function("algo input", |b| b.iter(|| algorithm(&input)));
 }
 
-criterion_group!(benches, criterion_benchmark);
+criterion_group!(benches, bench_algorithm);
 criterion_main!(benches);
