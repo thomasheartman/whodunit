@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 use serde_json;
 
-fn process_data(products: &mut Vec<Input>) -> Vec<Input> {
+fn process_data(products: &mut Vec<Input>) -> Vec<Output> {
     products.reverse();
-    let mut output: Vec<Input> = vec![];
+    let mut output: Vec<Output> = vec![];
     for p in products {
         if !output.iter().any(|x| x.assigned_to == p.assigned_to) {
-            output.push(p.clone())
+            output.push(Output::try_from(p.clone()).unwrap())
         }
     }
 
@@ -30,7 +30,6 @@ pub fn algorithm(input: &str) {
 #[serde(rename_all = "camelCase")]
 pub struct Input {
     target: String,
-    #[serde(skip_serializing)]
     id: String,
     assigned_to: String,
 }
@@ -45,6 +44,49 @@ impl Input {
     }
 }
 
+#[derive(Serialize, PartialEq, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+struct Target {
+    location: String,
+    object_id: String,
+    code: String,
+}
+
+impl TryFrom<&str> for Target {
+    type Error = &'static str;
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        let segments: Vec<&str> = s.split(':').collect();
+        match &segments as &[&str] {
+            [loc, id, code, ..] => Ok(Target {
+                location: loc.to_string(),
+                object_id: id.to_string(),
+                code: code.to_string(),
+            }),
+            _ => Err("Couldn't convert string"),
+        }
+    }
+}
+
+#[derive(Serialize, PartialEq, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+struct Output {
+    target: Target,
+    assigned_to: String,
+}
+
+impl TryFrom<Input> for Output {
+    type Error = &'static str;
+    fn try_from(input: Input) -> Result<Self, Self::Error> {
+        match Target::try_from(input.target.as_str()) {
+            Ok(target) => Ok(Self {
+                target,
+                assigned_to: input.assigned_to.clone(),
+            }),
+
+            Err(_) => Err("Couldn't convert input to output because of an error"),
+        }
+    }
+}
 // transform and sort, use the ID for lookup
 
 // switch from slice to hashmap or collect into one <- if you need to look things up multiple times
@@ -65,10 +107,10 @@ mod tests {
     #[test]
     fn it_removes_duplicates() {
         let mut input = vec![
-            Input::new("x", "", "a"),
-            Input::new("x", "", "b"),
-            Input::new("_", "", "a"),
-            Input::new("_", "", "b"),
+            Input::new("a:bt:na", "", "a"),
+            Input::new("a:bt:na", "", "b"),
+            Input::new("a:bt:na", "", "a"),
+            Input::new("a:bt:na", "", "b"),
         ];
 
         let output = process_data(&mut input);
@@ -78,33 +120,49 @@ mod tests {
 
     #[test]
     fn it_removes_the_right_elements() {
-        let c = Input::new("c", "", "a");
-        let d = Input::new("d", "", "b");
-        let mut input = vec![
-            Input::new("x", "", "a"),
-            Input::new("x", "", "b"),
-            c.clone(),
-            d.clone(),
-        ];
+        let c = Input::new("c:j:t", "", "a");
+        let d = Input::new("d:x:z", "", "b");
+        let c_out = Output::try_from(c.clone()).unwrap();
+        let d_out = Output::try_from(c.clone()).unwrap();
+        let mut input = vec![Input::new("x", "", "a"), Input::new("x", "", "b"), c, d];
 
         let output = process_data(&mut input);
 
         assert_eq!(output.len(), 2);
-        assert!(output.contains(&c));
-        assert!(output.contains(&d));
+        assert!(output.contains(&c_out));
+        assert!(output.contains(&d_out));
     }
 
     #[test]
     fn it_sorts_by_assigned_to() {
-        let a = Input::new("", "", "a");
-        let b = Input::new("", "", "b");
-        let c = Input::new("", "", "c");
+        let a = Input::new("a:bA:c", "", "a");
+        let b = Input::new("b:bc:c", "", "b");
+        let c = Input::new("c:aeouht:n", "", "c");
         let mut input = vec![b.clone(), c.clone(), a.clone()];
 
-        let expected = vec![a.clone(), b.clone(), c.clone()];
+        let expected = vec![
+            Output::try_from(a.clone()).unwrap(),
+            Output::try_from(b.clone()).unwrap(),
+            Output::try_from(c.clone()).unwrap(),
+        ];
 
         let output = process_data(&mut input);
 
         assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn target_splits_string_correctly() {
+        let input = "a:b:c";
+
+        let expected = Target {
+            location: "a".to_string(),
+            object_id: "b".to_string(),
+            code: "c".to_string(),
+        };
+
+        let actual = Target::try_from(input).unwrap();
+
+        assert_eq!(actual, expected);
     }
 }
