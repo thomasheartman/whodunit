@@ -1,21 +1,20 @@
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::collections::HashMap;
 
-fn process_data<'a>(products: &'a Vec<Input<'a>>) -> Vec<Output<'a>> {
+fn process_data<'a>(products: &'a [Input<'a>]) -> Vec<Output<'a>> {
     let mut map = HashMap::<&str, Output>::new();
     for p in products {
-        map.insert(&p.assigned_to, Output::try_from(p).unwrap());
+        map.insert(p.assigned_to, Output::try_from(p).unwrap());
     }
 
     let mut output: Vec<Output> = map.into_values().collect();
-    output.sort_by(|a, b| a.assigned_to.cmp(&b.assigned_to));
+    output.sort_by(|a, b| a.assigned_to.cmp(b.assigned_to));
     output
 }
 
 pub fn algorithm(input: &str) {
-    if let Ok(mut products) = serde_json::from_str::<Vec<Input>>(input) {
-        let output = process_data(&mut products);
+    if let Ok(products) = serde_json::from_str::<Vec<Input>>(input) {
+        let output = process_data(&products);
         if let Ok(out) = serde_json::to_string(&output) {
             match std::fs::write("output.json", &out) {
                 Ok(_) => {}
@@ -79,7 +78,7 @@ impl<'a> TryFrom<&'a Input<'_>> for Output<'a> {
         match Target::try_from(input.target) {
             Ok(target) => Ok(Self {
                 target,
-                assigned_to: &input.assigned_to,
+                assigned_to: input.assigned_to,
             }),
 
             Err(_) => Err("Couldn't convert input to output because of an error"),
@@ -93,7 +92,7 @@ impl<'a> TryFrom<&'a mut Input<'_>> for Output<'a> {
         match Target::try_from(input.target) {
             Ok(target) => Ok(Self {
                 target,
-                assigned_to: &input.assigned_to,
+                assigned_to: input.assigned_to,
             }),
 
             Err(_) => Err("Couldn't convert input to output because of an error"),
