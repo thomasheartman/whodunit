@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
 
-fn process_data(products: &Vec<Input>) -> Vec<Output> {
+fn process_data<'a>(products: &'a Vec<Input<'a>>) -> Vec<Output<'a>> {
     let mut map = HashMap::<&str, Output>::new();
     for p in products {
         map.insert(&p.assigned_to, Output::try_from(p).unwrap());
@@ -27,18 +27,18 @@ pub fn algorithm(input: &str) {
 
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct Input {
-    target: String,
-    id: String,
-    assigned_to: String,
+pub struct Input<'a> {
+    target: &'a str,
+    id: &'a str,
+    assigned_to: &'a str,
 }
 
-impl Input {
-    fn new(target: &str, id: &str, assigned_to: &str) -> Self {
+impl<'a> Input<'a> {
+    fn new(target: &'a str, id: &'a str, assigned_to: &'a str) -> Self {
         Self {
-            target: target.to_string(),
-            id: id.to_string(),
-            assigned_to: assigned_to.to_string(),
+            target,
+            id,
+            assigned_to,
         }
     }
 }
@@ -73,10 +73,10 @@ struct Output<'a> {
     assigned_to: &'a str,
 }
 
-impl<'a> TryFrom<&'a Input> for Output<'a> {
+impl<'a> TryFrom<&'a Input<'_>> for Output<'a> {
     type Error = &'static str;
     fn try_from(input: &'a Input) -> Result<Self, Self::Error> {
-        match Target::try_from(input.target.as_str()) {
+        match Target::try_from(input.target) {
             Ok(target) => Ok(Self {
                 target,
                 assigned_to: &input.assigned_to,
@@ -87,10 +87,10 @@ impl<'a> TryFrom<&'a Input> for Output<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a mut Input> for Output<'a> {
+impl<'a> TryFrom<&'a mut Input<'_>> for Output<'a> {
     type Error = &'static str;
     fn try_from(input: &'a mut Input) -> Result<Self, Self::Error> {
-        match Target::try_from(input.target.as_str()) {
+        match Target::try_from(input.target) {
             Ok(target) => Ok(Self {
                 target,
                 assigned_to: &input.assigned_to,
