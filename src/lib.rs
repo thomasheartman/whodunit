@@ -86,19 +86,6 @@ impl<'a> TryFrom<&'a Input<'_>> for Output<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a mut Input<'_>> for Output<'a> {
-    type Error = &'static str;
-    fn try_from(input: &'a mut Input) -> Result<Self, Self::Error> {
-        match Target::try_from(input.target) {
-            Ok(target) => Ok(Self {
-                target,
-                assigned_to: input.assigned_to,
-            }),
-
-            Err(_) => Err("Couldn't convert input to output because of an error"),
-        }
-    }
-}
 // transform and sort, use the ID for lookup
 
 // switch from slice to hashmap or collect into one <- if you need to look things up multiple times
