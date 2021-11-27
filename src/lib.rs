@@ -1,15 +1,14 @@
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::collections::HashMap;
 
-fn process_data(products: &mut Vec<Input>) -> Vec<Output> {
-    products.reverse();
-    let mut output: Vec<Output> = vec![];
+fn process_data(products: &Vec<Input>) -> Vec<Output> {
+    let mut map = HashMap::<&str, Output>::new();
     for p in products {
-        if !output.iter().any(|x| x.assigned_to == p.assigned_to) {
-            output.push(Output::try_from(p).unwrap())
-        }
+        map.insert(&p.assigned_to, Output::try_from(p).unwrap());
     }
 
+    let mut output: Vec<Output> = map.into_values().collect();
     output.sort_by(|a, b| a.assigned_to.cmp(&b.assigned_to));
     output
 }
@@ -71,7 +70,7 @@ impl<'a> TryFrom<&'a str> for Target<'a> {
 #[serde(rename_all = "camelCase")]
 struct Output<'a> {
     target: Target<'a>,
-    assigned_to: String,
+    assigned_to: &'a str,
 }
 
 impl<'a> TryFrom<&'a Input> for Output<'a> {
@@ -80,7 +79,7 @@ impl<'a> TryFrom<&'a Input> for Output<'a> {
         match Target::try_from(input.target.as_str()) {
             Ok(target) => Ok(Self {
                 target,
-                assigned_to: input.assigned_to.clone(),
+                assigned_to: &input.assigned_to,
             }),
 
             Err(_) => Err("Couldn't convert input to output because of an error"),
@@ -94,7 +93,7 @@ impl<'a> TryFrom<&'a mut Input> for Output<'a> {
         match Target::try_from(input.target.as_str()) {
             Ok(target) => Ok(Self {
                 target,
-                assigned_to: input.assigned_to.clone(),
+                assigned_to: &input.assigned_to,
             }),
 
             Err(_) => Err("Couldn't convert input to output because of an error"),
@@ -139,8 +138,8 @@ mod tests {
         let c_out = Output::try_from(&c).unwrap();
         let d_out = Output::try_from(&d).unwrap();
         let mut input = vec![
-            Input::new("x", "", "a"),
-            Input::new("x", "", "b"),
+            Input::new("x:j:t", "", "a"),
+            Input::new("x:t:t", "", "b"),
             c.clone(),
             d.clone(),
         ];
