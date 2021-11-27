@@ -53,14 +53,15 @@ struct Target<'a> {
 impl<'a> TryFrom<&'a str> for Target<'a> {
     type Error = &'static str;
     fn try_from(s: &'a str) -> Result<Self, Self::Error> {
-        let segments: Vec<&str> = s.split(':').collect();
-        match &segments as &[&str] {
-            [location, object_id, code, ..] => Ok(Target {
-                location,
-                object_id,
-                code,
+        let first = s.find(':');
+        let last = s.rfind(':');
+        match (first, last) {
+            (Some(f), Some(l)) => Ok(Target {
+                location: &s[..f],
+                object_id: &s[f + 1..l],
+                code: &s[l + 1..],
             }),
-            _ => Err("Couldn't convert string"),
+            _ => Err("Wrong format on target string; can't convert."),
         }
     }
 }
