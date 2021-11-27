@@ -24,5 +24,9 @@ pkgs.mkShell {
     )
     cargo-edit
     cargo-watch
+
+    gnuplot
+
+    linuxPackages.perf
   ];
 }
