@@ -17,6 +17,9 @@ bench = false
 name = "my_benchmark"
 harness = false
 
+[[bench]]
+name = "string_destructuring"
+harness = false
 
 [profile.bench]
 debug = true
