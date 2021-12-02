@@ -3,8 +3,10 @@ use std::collections::HashMap;
 
 fn process_data<'a>(products: &'a [Input<'a>]) -> Vec<Output<'a>> {
     let mut map = HashMap::<&str, Output>::new();
-    for p in products {
-        map.insert(p.assigned_to, Output::try_from(p).unwrap());
+    for p in products.iter().rev() {
+        if !map.contains_key(p.assigned_to) {
+            map.insert(p.assigned_to, Output::try_from(p).unwrap());
+        }
     }
 
     let mut output: Vec<Output> = map.into_values().collect();
