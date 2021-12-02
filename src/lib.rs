@@ -170,4 +170,9 @@ mod tests {
 
         assert_eq!(actual, expected);
     }
+
+    #[test]
+    fn failing_test() {
+        assert!(false);
+    }
 }
