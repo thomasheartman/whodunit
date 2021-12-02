@@ -22,21 +22,10 @@ pub fn bench_algorithm(c: &mut Criterion) {
 }
 
 pub fn bench_algorithm_with_duplicates(c: &mut Criterion) {
-    // let x10 = std::fs::read_to_string("./10.json").unwrap();
-    // let x100 = std::fs::read_to_string("./100.json").unwrap();
-    // let x1_000 = std::fs::read_to_string("./1000.json").unwrap();
-    // let x10_000 = std::fs::read_to_string("./10_000.json").unwrap();
     let x200_000 = std::fs::read_to_string("./200_000.json").unwrap();
-    // let x1_000_000 = std::fs::read_to_string("./1_000_000.json").unwrap();
+
     let mut group = c.benchmark_group("Algo range with dupes");
-    for (i, f) in [
-        x200_000,
-        // x10, x100, x1_000, x10_000, x100_000,
-        // x1_000_000
-    ]
-    .iter()
-    .enumerate()
-    {
+    for (i, f) in [x200_000].iter().enumerate() {
         let zeroes = "0".repeat(i + 5);
         let id = format!("2{zeroes} elements (duplicates >= 50%)");
         // let duplicated = f.repeat(2);
