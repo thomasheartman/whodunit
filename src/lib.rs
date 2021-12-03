@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-fn process_data<'a>(products: &'a [Input<'a>]) -> Vec<Output<'a>> {
+fn process_data<'a>(input: &'a [Input<'a>]) -> Vec<Output<'a>> {
     let mut map = HashMap::<&str, Output>::new();
-    for p in products.iter().rev() {
+    for p in input.iter().rev() {
         if !map.contains_key(p.assigned_to) {
             map.insert(p.assigned_to, Output::try_from(p).unwrap());
         }
